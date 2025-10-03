@@ -170,6 +170,7 @@ namespace QuizSystem.Controllers
         }
         public async Task<IActionResult> TakeQuiz(int id)
         {
+            // Load quiz with questions and answers
             var quiz = await _context.Quizzes
                 .Include(q => q.Questions)
                     .ThenInclude(q => q.Answers)
@@ -178,7 +179,6 @@ namespace QuizSystem.Controllers
             if (quiz == null)
                 return NotFound();
 
-            // Create a quiz attempt record when student starts
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
             {
@@ -186,6 +186,7 @@ namespace QuizSystem.Controllers
             }
             var attempt = await _context.QuizAttempts
                 .FirstOrDefaultAsync(a => a.QuizId == quiz.Id && a.UserId == userId);
+            // Create a quiz attempt record when student starts
 
             if (attempt == null)
             {
