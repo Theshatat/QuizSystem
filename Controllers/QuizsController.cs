@@ -7,6 +7,7 @@ using QuizSystem.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace QuizSystem.Controllers
@@ -167,23 +168,99 @@ namespace QuizSystem.Controllers
         {
             return _context.Quizzes.Any(e => e.Id == id);
         }
-        public async Task<IActionResult> TakeQuiz(int? id)
+        public async Task<IActionResult> TakeQuiz(int id)
         {
-            var wholeQuiz = await _context.Quizzes
-                .Where(q => q.Id == id)
+            var quiz = await _context.Quizzes
                 .Include(q => q.Questions)
-                .ThenInclude(q => q.Answers)
-                .FirstOrDefaultAsync();
-            if (wholeQuiz == null)
+                    .ThenInclude(q => q.Answers)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (quiz == null)
+                return NotFound();
+
+            // Create a quiz attempt record when student starts
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
             {
-                return RedirectToAction("Index");
+                return Unauthorized(); // or redirect to login
+            }
+            var attempt = await _context.QuizAttempts
+                .FirstOrDefaultAsync(a => a.QuizId == quiz.Id && a.UserId == userId);
+
+            if (attempt == null)
+            {
+                attempt = new QuizAttempt
+                {
+                    QuizId = quiz.Id,
+                    StaretedAt = DateTime.Now,
+                    UserId = userId,
+                    TotalQuestions = quiz.Questions.Count,
+                    Score = 0
+                };
+
+                _context.QuizAttempts.Add(attempt);
+                await _context.SaveChangesAsync();
             }
 
-            return View(wholeQuiz);
+            // Pass attempt Id to the view (hidden field)
+            ViewBag.AttemptId = attempt.Id;
+
+            return View(quiz);
         }
-        public async Task<IActionResult> SubmitQuiz(int? id)
+
+        [HttpPost]
+        public async Task<IActionResult> SubmitQuiz(int QuizId, int AttemptId, Dictionary<int, int> Answers)
         {
-            return RedirectToAction("Index");
+            var quiz = await _context.Quizzes
+                .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+                .FirstOrDefaultAsync(q => q.Id == QuizId);
+
+            if (quiz == null)
+                return NotFound();
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var attempt = await _context.QuizAttempts
+                .FirstOrDefaultAsync(a => a.Id == AttemptId && a.QuizId == QuizId && a.UserId == userId);
+
+            if (attempt == null)
+                return NotFound();
+
+
+            int score = 0;
+
+            foreach (var question in quiz.Questions)
+            {
+                if (Answers.ContainsKey(question.Id))
+                {
+                    var selectedAnswerId = Answers[question.Id];
+                    var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
+
+                    if (correctAnswer != null && selectedAnswerId == correctAnswer.Id)
+                        score++;
+                }
+            }
+            attempt.StaretedAt = attempt.StaretedAt;
+            attempt.Score = score;
+            attempt.FinishedAt = DateTime.Now;
+            attempt.TotalQuestions = attempt.TotalQuestions;
+
+            _context.Update(attempt);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Result", new { attemptId = attempt.Id }); //attemptId here should be passed in the Result action as a parameter (case sensitive)
+        }
+
+        public async Task<IActionResult> Result(int attemptId)
+        {
+            var attempt = await _context.QuizAttempts
+                .Include(a => a.Quiz)
+                .FirstOrDefaultAsync(a => a.Id == attemptId);
+
+            if (attempt == null) return NotFound();
+
+            return View(attempt);
         }
     }
 }
