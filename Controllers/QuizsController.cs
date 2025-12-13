@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace QuizSystem.Controllers
 {
+    [Authorize(Roles ="Admin,Student")]
     public class QuizsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -188,7 +189,7 @@ namespace QuizSystem.Controllers
                 .FirstOrDefaultAsync(a => a.QuizId == quiz.Id && a.UserId == userId);
             // Create a quiz attempt record when student starts
 
-            if (attempt == null)
+            if (attempt != null)
             {
                 attempt = new QuizAttempt
                 {
@@ -235,7 +236,8 @@ namespace QuizSystem.Controllers
             {
                 if (Answers.ContainsKey(question.Id))
                 {
-                    var selectedAnswerId = Answers[question.Id];
+                    // Get the selected answer ID from the form submission where question.Id is the key because in the form we set name="Answers[@question.Id]" and name is treated as key in dictionary
+                    var selectedAnswerId = Answers[question.Id]; 
                     var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
 
                     if (correctAnswer != null && selectedAnswerId == correctAnswer.Id)
@@ -257,6 +259,7 @@ namespace QuizSystem.Controllers
         {
             var attempt = await _context.QuizAttempts
                 .Include(a => a.Quiz)
+                    .ThenInclude(a=>a.Questions)
                 .FirstOrDefaultAsync(a => a.Id == attemptId);
 
             if (attempt == null) return NotFound();

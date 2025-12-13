@@ -48,7 +48,7 @@ namespace QuizSystem.Controllers
         // GET: Questions/Create
         public IActionResult Create()
         {
-            ViewData["QuizId"] = new SelectList(_context.Quizzes, "Id", "Id");
+            ViewData["QuizId"] = new SelectList(_context.Quizzes, "Id", "Title");
             return View();
         }
 
@@ -83,7 +83,7 @@ namespace QuizSystem.Controllers
             {
                 return NotFound();
             }
-            ViewData["QuizId"] = new SelectList(_context.Quizzes, "Id", "Id", question.QuizId);
+            ViewData["QuizId"] = new SelectList(_context.Quizzes, "Id", "Title", question.QuizId);
             return View(question);
         }
 

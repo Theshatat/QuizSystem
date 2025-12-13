@@ -13,18 +13,18 @@
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Text" class="control-label"></label>
                 <input asp-for="Text" class="form-control" />
                 <span asp-validation-for="Text" class="text-danger"></span>
             </div>
-            <div class="form-group form-check">
+            <div class="form-group form-check mb-3">
                 <label class="form-check-label">
                     <input class="form-check-input" asp-for="IsCorrect" /> @Html.DisplayNameFor(model => model.IsCorrect)
                 </label>
             </div>
-            <div class="form-group">
-                <label asp-for="QuestionId" class="control-label"></label>
+            <div class="form-group mb-3">
+                <label asp-for="QuestionId" class="control-label">All Questions</label>
                 <select asp-for="QuestionId" class="form-control" asp-items="ViewBag.QuestionId"></select>
                 <span asp-validation-for="QuestionId" class="text-danger"></span>
             </div>
@@ -35,9 +35,6 @@
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
