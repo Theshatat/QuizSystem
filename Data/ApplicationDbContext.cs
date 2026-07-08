@@ -17,5 +17,21 @@ namespace QuizSystem.Data
         public DbSet<AttemptedAnswer> AttemptedAnswers { get; set; }
         public DbSet<QuizAttempt> QuizAttempts { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<AttemptedAnswer>()
+                .HasOne(a => a.Question)
+                .WithMany()
+                .HasForeignKey(a => a.QuestionId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<AttemptedAnswer>()
+        .HasOne(a => a.SelectedAnswer)
+        .WithMany()
+        .HasForeignKey(a => a.SelectedAnswerId)
+        .OnDelete(DeleteBehavior.NoAction);
+        }
     }
 }
