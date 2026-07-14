@@ -25,7 +25,9 @@ namespace QuizSystem.Controllers
         // GET: Quizs
         public async Task<IActionResult> Index()
         {
-            var quizzes = await _context.Quizzes.ToListAsync();
+            var quizzes = await _context.Quizzes
+                .Include(x=>x.Questions)
+                .ToListAsync();
             if (quizzes == null || !quizzes.Any())
             {
                 return View(new List<Quiz>()); // Return an empty list if there are no quizzes
@@ -209,7 +211,6 @@ namespace QuizSystem.Controllers
 
             return View(quiz);
         }
-
         [HttpPost]
         public async Task<IActionResult> SubmitQuiz(int QuizId, int AttemptId, Dictionary<int, int> Answers)
         {
@@ -236,7 +237,9 @@ namespace QuizSystem.Controllers
             {
                 if (Answers.ContainsKey(question.Id))
                 {
-                    // Get the selected answer ID from the form submission where question.Id is the key because in the form we set name="Answers[@question.Id]" and name is treated as key in dictionary
+                    // Get the selected answer ID from the form submission .
+                    // where question.Id is the key because in the form we set name="Answers[@question.Id]"
+                    // and name is treated as key in dictionary.
                     var selectedAnswerId = Answers[question.Id]; 
                     var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
 
@@ -254,7 +257,6 @@ namespace QuizSystem.Controllers
 
             return RedirectToAction("Result", new { attemptId = attempt.Id }); //attemptId here should be passed in the Result action as a parameter (case sensitive)
         }
-
         public async Task<IActionResult> Result(int attemptId)
         {
             var attempt = await _context.QuizAttempts

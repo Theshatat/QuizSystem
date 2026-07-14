@@ -15,7 +15,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+// make sure to add the following line to configure JSON serialization options to ignore cycles that may occur due to navigation properties in your entity models.
+// This is important to prevent serialization issues when returning data from your API endpoints.
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularPolicy", policy =>
@@ -29,32 +37,26 @@ builder.Services.AddCors(options =>
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
 builder.Services.AddSingleton(jwtOptions);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = "Bearer";
-    options.DefaultChallengeScheme = "Bearer";
-})
-.AddJwtBearer("Bearer", options =>
-{
-    options.SaveToken = true;
-
-    options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddAuthentication()
+    .AddJwtBearer("Bearer", options =>
     {
-        ValidateIssuer = true,
-        ValidIssuer = jwtOptions.Issuer,
+        options.SaveToken = true;
 
-        ValidateAudience = true,
-        ValidAudience = jwtOptions.Audience,
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
 
-        ValidateLifetime = true,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
 
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey =
-            new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtOptions.SigningKey)
-            )
-    };
-});
+            ValidateLifetime = true,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.SigningKey))
+        };
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -65,16 +67,21 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.MapRazorPages();
-
 app.UseHttpsRedirection();
+
 app.UseRouting();
+// Add the following line to serve static files it should be placed before usecors and authentication/authorization middleware.
+app.UseStaticFiles();
 app.UseCors("AngularPolicy");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
-
-app.MapControllerRoute(
+// Map controller routes for API endpoints.
+app.MapControllers();
+// Map controller routes for MVC endpoints
+app.MapControllerRoute( 
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();

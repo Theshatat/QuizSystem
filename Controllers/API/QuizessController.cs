@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuizSystem.Models;
 using QuizSystem.Data;
+using QuizSystem.Models;
+using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(AuthenticationSchemes = "Bearer")]
 public class QuizessController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -17,14 +20,18 @@ public class QuizessController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Quiz>>> GetQuiz()
     {
-        return await _context.Quizzes.ToListAsync();
+        return await _context.Quizzes
+            .Include(x=>x.Questions)
+            .ToListAsync();
     }
 
     // GET: api/Quiz/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Quiz>> GetQuiz(int id)
     {
-        var quiz = await _context.Quizzes.FindAsync(id);
+        var quiz = await _context.Quizzes
+         .Include(q => q.Questions)
+         .FirstOrDefaultAsync(q => q.Id == id);
 
         if (quiz == null)
         {
@@ -95,5 +102,121 @@ public class QuizessController : ControllerBase
     private bool QuizExists(int? id)
     {
         return _context.Quizzes.Any(e => e.Id == id);
+    }
+
+    [HttpGet("TakeQuiz/{id}")]
+    [Authorize]
+    public async Task<IActionResult> TakeQuiz(int id)
+    {
+        var quiz = await _context.Quizzes
+            .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (quiz == null)
+            return NotFound();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var attempt = await _context.QuizAttempts
+            .FirstOrDefaultAsync(a => a.QuizId == quiz.Id && a.UserId == userId);
+
+        if (attempt != null)
+        {
+            attempt = new QuizAttempt
+            {
+                QuizId = quiz.Id,
+                UserId = userId,
+                StaretedAt = DateTime.Now,
+                TotalQuestions = quiz.Questions.Count,
+                Score = 0
+            };
+
+            _context.QuizAttempts.Add(attempt);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok(new
+        {
+            AttemptId = attempt.Id,
+            Quiz = quiz
+        });
+    }
+
+    [HttpPost("SubmitQuiz")]
+    [Authorize]
+    public async Task<IActionResult> SubmitQuiz([FromBody] SubmitQuizDto dto)
+    {
+        var quiz = await _context.Quizzes
+            .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id == dto.QuizId);
+
+        if (quiz == null)
+            return NotFound();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var attempt = await _context.QuizAttempts
+            .FirstOrDefaultAsync(a =>
+                a.Id == dto.AttemptId &&
+                a.QuizId == dto.QuizId &&
+                a.UserId == userId);
+
+        if (attempt == null)
+            return NotFound();
+
+        var elapsed = DateTime.Now - attempt.StaretedAt;
+        bool timeExceeded = elapsed.TotalMinutes > quiz.DurationInMinutes;
+        int score = 0;
+
+        foreach (var question in quiz.Questions)
+        {
+            if (dto.Answers.ContainsKey(question.Id))
+            {
+                var selectedAnswerId = dto.Answers[question.Id];
+
+                var correctAnswer = question.Answers
+                    .FirstOrDefault(a => a.IsCorrect);
+
+                if (correctAnswer != null &&
+                    correctAnswer.Id == selectedAnswerId)
+                {
+                    score++;
+                }
+            }
+        }
+
+        attempt.Score = score;
+        attempt.FinishedAt = DateTime.Now;
+
+        _context.Update(attempt);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            AttemptId = attempt.Id,
+            Score = score,
+            TotalQuestions = attempt.TotalQuestions,
+            TimeExceeded = timeExceeded
+        });
+    }
+    [HttpGet("Result/{attemptId}")]
+    [Authorize]
+    public async Task<IActionResult> Result(int attemptId)
+    {
+        var attempt = await _context.QuizAttempts
+            .Include(a => a.Quiz)
+                .ThenInclude(q => q.Questions)
+            .FirstOrDefaultAsync(a => a.Id == attemptId);
+
+        if (attempt == null)
+            return NotFound();
+
+        return Ok(attempt);
     }
 }
