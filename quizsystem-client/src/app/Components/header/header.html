@@ -1,0 +1,156 @@
+<!-- quiz-navbar.component.html -->
+<nav class="navbar navbar-expand-lg custom-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <span class="brand-icon">🧩</span>
+      <span class="brand-text">QuizMaster</span>
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/quizzes">Quizzes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Leaderboard</a>
+        </li>
+      </ul>
+      
+      <div class="auth-actions">
+        <!-- Kept original Angular logic -->
+        <a href="/login" *ngIf="!(isAuthenticated$ | async)" class="btn btn-login">Login</a>
+        <button *ngIf="isAuthenticated$ | async" (click)="logout()" class="btn btn-logout">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<style>
+/* quiz-navbar.component.css */
+.custom-navbar {
+  background: white;
+  padding: 1rem 0;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #1a1a1a !important;
+  transition: transform 0.2s ease;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.02);
+}
+
+.brand-icon {
+  font-size: 1.8rem;
+}
+
+.brand-text {
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nav-link {
+  color: #666 !important;
+  font-weight: 500;
+  margin: 0 10px;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover, .nav-item.active .nav-link {
+  color: #4f46e5 !important;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after, .nav-item.active .nav-link::after {
+  width: 80%;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-login {
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  color: white !important;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-logout {
+  background: transparent;
+  color: #dc3545 !important;
+  border: 2px solid #dc3545;
+  padding: 6px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: #dc3545;
+  color: white !important;
+  transform: translateY(-2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .navbar-nav {
+    padding: 20px 0;
+  }
+  
+  .nav-link {
+    margin: 5px 0;
+  }
+  
+  .auth-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+  }
+  
+  .nav-link::after {
+    display: none;
+  }
+}
+</style>
