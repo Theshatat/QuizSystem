@@ -124,7 +124,7 @@ public class QuizessController : ControllerBase
         var attempt = await _context.QuizAttempts
             .FirstOrDefaultAsync(a => a.QuizId == quiz.Id && a.UserId == userId);
 
-        if (attempt != null)
+        if (attempt == null)
         {
             attempt = new QuizAttempt
             {
@@ -138,11 +138,32 @@ public class QuizessController : ControllerBase
             _context.QuizAttempts.Add(attempt);
             await _context.SaveChangesAsync();
         }
-
+        // Map to student-safe DTO — no IsCorrect anywhere in this
+        // you now manually build a new object graph (quizDto) that mirrors the shape of quiz but selectively excludes IsCorrect,
+        // and you return that instead of quiz itself.
+        var quizDto = new QuizForStudentDto
+        {
+            Id = quiz.Id,
+            Title = quiz.Title,
+            Description = quiz.Description,
+            DurationInMinutes = quiz.DurationInMinutes,
+            Questions = quiz.Questions.Select(q => new QuestionForStudentDto
+            {
+                Id = q.Id,
+                Text = q.Text,
+                ImageUrl = q.ImageUrl,
+                Answers = q.Answers.Select(a => new AnswerForStudentDto
+                {
+                    Id = a.Id,
+                    Text = a.Text
+                    // IsCorrect deliberately omitted
+                }).ToList()
+            }).ToList()
+        };
         return Ok(new
         {
             AttemptId = attempt.Id,
-            Quiz = quiz
+            Quiz = quizDto
         });
     }
 
