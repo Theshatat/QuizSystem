@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/internal/Observable';
 import { IQuiz } from '../../Models/Quiz/quiz';
 import { IQuizForStudent } from '../../Models/interfaces';
+import { IQuizAttemptResult } from '../../Models/iresult-interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -31,5 +32,8 @@ export class QuizzService {
   }
   submitQuiz(dto:{quizId:number, attemptId:number|null, answers:Record<number, number>}):Observable<any> {
     return this.httpClient.post<any>('https://localhost:7266/api/Quizess/SubmitQuiz', dto);
+  }
+  result(attemptId:number):Observable<IQuizAttemptResult>{
+    return this.httpClient.get<IQuizAttemptResult>(`https://localhost:7266/api/Quizess/Result/${attemptId}`);
   }
 }

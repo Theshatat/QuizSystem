@@ -44,14 +44,28 @@ public class QuizessController : ControllerBase
     // PUT: api/Quiz/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutQuiz(int? id, Quiz quiz)
+    public async Task<IActionResult> PutQuiz(int id, QuizDto quiz)
     {
-        if (id != quiz.Id)
+        var existingQuiz = await _context.Quizzes.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (existingQuiz == null)
+        {
+            return NotFound();
+        }
+        // Check if the user is the owner of the quiz to prevent unauthorized updates
+        if (existingQuiz.InstructorId != userId)
+        {
+            return Forbid();
+        }
+        if (id != existingQuiz.Id)
         {
             return BadRequest();
         }
 
-        _context.Entry(quiz).State = EntityState.Modified;
+        existingQuiz.Title = quiz.Title;
+        existingQuiz.Description = quiz.Description;
+        existingQuiz.DurationInMinutes = quiz.DurationInMinutes;
 
         try
         {
@@ -75,12 +89,22 @@ public class QuizessController : ControllerBase
     // POST: api/Quiz
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<ActionResult<Quiz>> PostQuiz(Quiz quiz)
+    public async Task<ActionResult<Quiz>> PostQuiz(QuizDto quiz)
     {
-        _context.Quizzes.Add(quiz);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var quizEntity = new Quiz
+        {
+            Title = quiz.Title,
+            Description = quiz.Description,
+            DurationInMinutes = quiz.DurationInMinutes,
+            IsPublished = false,
+            CreatedAt = DateTime.UtcNow,
+            InstructorId = userId,
+        };
+        _context.Quizzes.Add(quizEntity);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction("GetQuiz", new { id = quiz.Id }, quiz);
+        return CreatedAtAction("GetQuiz", new { id = quizEntity.Id }, quizEntity);
     }
 
     // DELETE: api/Quiz/5
@@ -208,6 +232,12 @@ public class QuizessController : ControllerBase
                 {
                     score++;
                 }
+            _context.AttemptedAnswers.Add(new AttemptedAnswer
+            {
+                QuizAttemptId = attempt.Id,
+                QuestionId = question.Id,
+                SelectedAnswerId = selectedAnswerId
+            });
             }
         }
 
@@ -233,11 +263,41 @@ public class QuizessController : ControllerBase
         var attempt = await _context.QuizAttempts
             .Include(a => a.Quiz)
                 .ThenInclude(q => q.Questions)
+                    .ThenInclude(z=>z.Answers)
+            .Include(a => a.AttemptedAnswers)
             .FirstOrDefaultAsync(a => a.Id == attemptId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (attempt == null)
             return NotFound();
 
-        return Ok(attempt);
+        // Ensure the user can only access their own attempts not others.
+        if (attempt.UserId != userId)
+            return Forbid();
+
+        var attemptDto = new QuizAttempsDto
+        {
+            Id = attempt.Id,
+            QuizTitle = attempt.Quiz.Title,
+            StaretedAt = attempt.StaretedAt,
+            FinishedAt = attempt.FinishedAt,
+            Score = attempt.Score,
+            TotalQuestions = attempt.TotalQuestions,
+            Questions = attempt.Quiz.Questions.Select(q => new QuestionResultDto
+            {
+                Id = q.Id,
+                Text = q.Text,
+                SelectedAnswerId = attempt.AttemptedAnswers.FirstOrDefault(aa => aa.QuestionId == q.Id)?.SelectedAnswerId,
+                Answers = q.Answers.Select(a => new AnswerResultDto
+                {
+                    Id = a.Id,
+                    Text = a.Text,
+                    IsCorrect = a.IsCorrect,
+                }).ToList()
+
+            }).ToList()
+        };
+
+        return Ok(attemptDto);
     }
 }

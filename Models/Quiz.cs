@@ -1,17 +1,27 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
 
-namespace QuizSystem.Models
+namespace QuizSystem.Models;
+
+public partial class Quiz
 {
-    public class Quiz
-    {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        [Display(Name = "Is Published")]
-        public bool IsPublished { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        [Display(Name = "Duration In Minutes")]
-        public int DurationInMinutes { get; set; }
-        public List<Question> Questions { get; set; } = new();
-    }
+    public int Id { get; set; }
+
+    public string Title { get; set; } = null!;
+
+    public string Description { get; set; } = null!;
+
+    public bool IsPublished { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public int DurationInMinutes { get; set; }
+
+    public string? InstructorId { get; set; }
+
+    public virtual AspNetUser? Instructor { get; set; }
+
+    public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+
+    public virtual ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
 }

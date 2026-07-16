@@ -1,1 +1,337 @@
-<p>result works!</p>
+<div class="result-container">
+  <!-- Summary Header -->
+  <div class="summary-card">
+    <div class="confetti-icon">🎉</div>
+    <h1 class="result-title">Quiz Completed!</h1>
+    <p class="quiz-name">{{ attempt()?.quizTitle }}</p>
+
+    <div class="score-display">
+      <div class="score-circle">
+        <span class="score-number">{{ score() }}</span>
+        <span class="score-total">/ {{ totalQuestions() }}</span>
+      </div>
+      <div class="percentage-badge">
+        {{ (score()! / totalQuestions()!) * 100 | number:'1.0-0' }}% Correct
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-label">Started</span>
+        <span class="stat-value">{{ startedAt() | date:'shortTime' }}</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">Finished</span>
+        <span class="stat-value">{{ finishedAt() | date:'shortTime' }}</span>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <a class="btn btn-secondary" href="/home">Back to Home</a>
+    </div>
+  </div>
+
+  <!-- Detailed Review Section -->
+  <div class="review-section">
+    <h2 class="review-title">Detailed Review</h2>
+    
+    <div class="questions-review-list">
+      @for (question of attempt()?.questions; track question.id; let i = $index) {
+        <div class="review-card">
+          <div class="review-header">
+            <span class="question-index">Question {{ i + 1 }}</span>
+          </div>
+          
+          <h3 class="question-text">{{ question.text }}</h3>
+
+          <div class="answers-review-grid">
+            @for (answer of question.answers; track answer.id) {
+              <div class="answer-item" 
+                [class.selected-wrong]="question.selectedAnswerId === answer.id && !answer.isCorrect"
+                [class.correct-answer]="answer.isCorrect"
+              >
+                <div class="answer-status-icon">
+                  @if (answer.isCorrect) {
+                    ✅
+                  } @else if (question.selectedAnswerId === answer.id && !answer.isCorrect) {
+                    ❌
+                  } @else {
+                    <span class="dot"></span>
+                  }
+                </div>
+                <span class="answer-text">{{ answer.text }}</span>
+                
+                @if (question.selectedAnswerId === answer.id) {
+                  <span class="your-choice-tag">Your Choice</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+/* quiz-result.component.css */
+.result-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Summary Card */
+.summary-card {
+  background: white;
+  border-radius: 32px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  margin-bottom: 50px;
+  border: 1px solid #f0f0f0;
+}
+
+.confetti-icon {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+}
+
+.result-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.quiz-name {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.score-circle {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: #f5f3ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 8px solid #4f46e5;
+  margin-bottom: 20px;
+}
+
+.score-number {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #4f46e5;
+  line-height: 1;
+}
+
+.score-total {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.percentage-badge {
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 40px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 30px;
+  background: #e5e7eb;
+}
+
+/* Review Section */
+.review-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 30px;
+}
+
+.questions-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.review-card {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.review-header {
+  margin-bottom: 20px;
+}
+
+.question-index {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4f46e5;
+  text-transform: uppercase;
+}
+
+.question-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.answers-review-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.answer-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f9fafb;
+  border: 2px solid #f3f4f6;
+  position: relative;
+}
+
+.answer-item.correct-answer {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+
+.answer-item.selected-wrong {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.answer-status-icon {
+  margin-right: 15px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #d1d5db;
+  border-radius: 50%;
+}
+
+.answer-text {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+}
+
+.your-choice-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4f46e5;
+  background: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Actions */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.btn {
+  padding: 14px 30px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  color: white;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+@media (max-width: 640px) {
+  .summary-card {
+    padding: 40px 20px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .stats-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .stat-divider {
+    display: none;
+  }
+}
+</style>

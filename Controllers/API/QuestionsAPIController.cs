@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizSystem.Models;
 using QuizSystem.Data;
+using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -37,14 +38,25 @@ public class QuestionsAPIController : ControllerBase
     // PUT: api/Question/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutQuestion(int? id, Question question)
+    public async Task<IActionResult> PutQuestion(int? id, QuestionDto question)
     {
-        if (id != question.Id)
-        {
-            return BadRequest();
+        var existingQuestion = await _context.Questions.FindAsync(id);
+
+        if (existingQuestion == null) {
+            return NotFound();
         }
 
-        _context.Entry(question).State = EntityState.Modified;
+        var quiz = await _context.Quizzes.FindAsync(existingQuestion.QuizId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if(quiz == null || quiz.InstructorId != userId)
+        {
+            return Forbid();
+        }
+
+        existingQuestion.Text = question.Text;
+        existingQuestion.ImageUrl = question.ImageUrl;
+        existingQuestion.Order = question.Order;
 
         try
         {
@@ -68,12 +80,40 @@ public class QuestionsAPIController : ControllerBase
     // POST: api/Question
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<ActionResult<Question>> PostQuestion(Question question)
+    public async Task<ActionResult<Question>> PostQuestion(int quizId, QuestionDto question)
     {
-        _context.Questions.Add(question);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if(userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var quiz = await _context.Quizzes.FindAsync(quizId);
+        if (quiz == null)
+        {
+            return NotFound();
+        }
+        if (quiz.InstructorId != userId)
+        {
+            return Forbid();
+        }
+        var questionEntity = new Question
+        {
+            Text = question.Text,
+            ImageUrl = question.ImageUrl,
+            Order = question.Order,
+            QuizId = quizId, // come from the query parameter (the route)
+            Answers = question.Answers.Select(a => new Answer
+            {
+                Text = a.Text,
+                IsCorrect = a.IsCorrect
+            }).ToList()
+        };
+        _context.Questions.Add(questionEntity);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction("GetQuestion", new { id = question.Id }, question);
+        return CreatedAtAction("GetQuestion", new { id = questionEntity.Id }, questionEntity);
     }
 
     // DELETE: api/Question/5
