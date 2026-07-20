@@ -40,6 +40,41 @@ public class QuizessController : ControllerBase
 
         return quiz;
     }
+    [HttpGet("{id}/manage")]
+    public async Task<IActionResult> GetQuizForManagement(int id)
+    {
+        var quiz = await _context.Quizzes
+            .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (quiz == null)
+            return NotFound();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (quiz.InstructorId != userId)
+            return Forbid();
+
+        var quizDto = new QuizDto
+        {
+            Title = quiz.Title,
+            Description = quiz.Description,
+            DurationInMinutes = quiz.DurationInMinutes,
+            Questions = quiz.Questions.Select(q => new QuestionDto
+            {
+                Text = q.Text,
+                ImageUrl = q.ImageUrl,
+                Order = q.Order,
+                Answers = q.Answers.Select(a => new AnswerDto
+                {
+                    Text = a.Text,
+                    IsCorrect = a.IsCorrect
+                }).ToList()
+            }).ToList()
+        };
+
+        return Ok(quizDto);
+    }
 
     // PUT: api/Quiz/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -116,6 +151,9 @@ public class QuizessController : ControllerBase
         {
             return NotFound();
         }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (quiz.InstructorId != userId)
+            return Forbid();
 
         _context.Quizzes.Remove(quiz);
         await _context.SaveChangesAsync();

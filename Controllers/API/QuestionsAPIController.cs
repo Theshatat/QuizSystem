@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuizSystem.Models;
 using QuizSystem.Data;
+using QuizSystem.Models;
 using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(AuthenticationSchemes = "Bearer")]
 public class QuestionsAPIController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -25,7 +27,9 @@ public class QuestionsAPIController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Question>> GetQuestion(int id)
     {
-        var question = await _context.Questions.FindAsync(id);
+        var question = await _context.Questions
+            .Include(q=>q.Answers)
+            .FirstOrDefaultAsync(q=>q.Id == id);
 
         if (question == null)
         {
@@ -38,9 +42,11 @@ public class QuestionsAPIController : ControllerBase
     // PUT: api/Question/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutQuestion(int? id, QuestionDto question)
+    public async Task<IActionResult> PutQuestion(int id, QuestionDto question)
     {
-        var existingQuestion = await _context.Questions.FindAsync(id);
+        var existingQuestion = await _context.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id == id);
 
         if (existingQuestion == null) {
             return NotFound();
@@ -58,6 +64,17 @@ public class QuestionsAPIController : ControllerBase
         existingQuestion.ImageUrl = question.ImageUrl;
         existingQuestion.Order = question.Order;
 
+        foreach (var incomingAnswer in question.Answers)
+        {
+            var existingAnswer = existingQuestion.Answers
+                .FirstOrDefault(a => a.Id == incomingAnswer.Id);
+
+            if (existingAnswer != null)
+            {
+                existingAnswer.Text = incomingAnswer.Text;
+                existingAnswer.IsCorrect = incomingAnswer.IsCorrect;
+            }
+        }
         try
         {
             await _context.SaveChangesAsync();
@@ -79,7 +96,7 @@ public class QuestionsAPIController : ControllerBase
 
     // POST: api/Question
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPost]
+    [HttpPost("{quizId}")]
     public async Task<ActionResult<Question>> PostQuestion(int quizId, QuestionDto question)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -125,6 +142,11 @@ public class QuestionsAPIController : ControllerBase
         {
             return NotFound();
         }
+
+        var quiz = await _context.Quizzes.FindAsync(question.QuizId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (quiz == null || quiz.InstructorId != userId)
+            return Forbid();
 
         _context.Questions.Remove(question);
         await _context.SaveChangesAsync();

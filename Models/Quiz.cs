@@ -1,4 +1,5 @@
-﻿using System;
+﻿using QuizSystem.Data;
+using System;
 using System.Collections.Generic;
 
 namespace QuizSystem.Models;
@@ -19,7 +20,7 @@ public partial class Quiz
 
     public string? InstructorId { get; set; }
 
-    public virtual AspNetUser? Instructor { get; set; }
+    public virtual ApplicationUser? Instructor { get; set; }
 
     public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
 

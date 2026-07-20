@@ -1,8 +1,20 @@
 <!-- quiz-list.component.html -->
 <div class="quiz-list-container">
   <div class="header-section">
-    <h2 class="section-title mx-3">My Quizzes</h2>
-    <p class="section-subtitle mx-3">Continue where you left off or explore new challenges.</p>
+    <div class="header-content">
+      <div class="title-group">
+        <h2 class="section-title">My Quizzes</h2>
+        <p class="section-subtitle">Continue where you left off or explore new challenges.</p>
+      </div>
+      @if(isInstructor){
+        <div class="card-actions">
+        <a href="create-quiz" class="btn btn-create">
+          <span class="btn-icon">+</span> Create New Quiz
+        </a>
+      </div>
+      }
+      
+    </div>
   </div>
 
   @if (loading()) {
@@ -14,7 +26,6 @@
     <div class="state-container error-state">
       <div class="error-icon">⚠️</div>
       <p class="error-message">{{ error() }}</p>
-      <!-- <button class="btn btn-retry" (click)="location.reload()">Try Again</button> -->
     </div>
   } @else {
     <div class="quiz-grid">
@@ -39,9 +50,16 @@
               <a href="takequiz/{{ quiz.id }}" class="btn btn-view">
                 Start Quiz
               </a>
-              <button class="btn btn-details" (click)="navigateByUrl(quiz.id)">
-                Details
-              </button>
+              @if(!isInstructor){
+                <button class="btn btn-details" (click)="navigateByUrl(quiz.id)">
+                  Details
+                </button>
+              }@else{
+                <a class="btn btn-details" href="quizzes/manage-quiz/{{ quiz.id }}">
+                  Manage Quiz
+                </a>
+              }
+              
             </div>
           </div>
         </div>
@@ -58,11 +76,23 @@
 }
 
 .header-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
+  background: white;
+  padding: 30px;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f0f0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
 }
 
 .section-title {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: #1a1a1a;
   margin-bottom: 8px;
@@ -71,6 +101,24 @@
 .section-subtitle {
   color: #666;
   font-size: 1.1rem;
+}
+
+/* Create Button Style */
+.btn-create {
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  color: white !important;
+}
+
+
+.btn-create:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(79, 70, 229, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-icon {
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
 /* Loading & Error States */
@@ -206,14 +254,19 @@
   background-color: #e5e7eb;
 }
 
-.btn-retry {
-  background-color: #1a1a1a;
-  color: white;
-  padding: 12px 30px;
-  flex: initial;
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .btn-create {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
-/* Mobile Adjustments */
 @media (max-width: 640px) {
   .quiz-grid {
     grid-template-columns: 1fr;

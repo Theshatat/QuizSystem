@@ -1,0 +1,256 @@
+<!-- quiz-management.component.html -->
+<div class="management-container">
+  @if (quiz()) {
+    <!-- Quiz Overview Section -->
+    <div class="overview-card">
+      <div class="overview-header">
+        <div class="title-section">
+          <h1 class="quiz-main-title">{{ quiz()!.title }}</h1>
+          <p class="quiz-main-description">{{ quiz()!.description }}</p>
+        </div>
+        <div class="overview-actions">
+          <a [routerLink]="['/quizzes', quizId, 'edit']" class="btn btn-edit-quiz">
+            <span class="icon">✏️</span> Edit Details
+          </a>
+          <button (click)="deleteQuiz()" class="btn btn-delete-quiz">
+            <span class="icon">🗑️</span> Delete Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions Management Section -->
+    <div class="questions-section">
+      <div class="section-header">
+        <h2 class="section-title">Questions List</h2>
+        <span class="question-count">{{ quiz()!.questions.length }} Questions Total</span>
+      </div>
+
+      <div class="questions-list">
+        @for (question of quiz()!.questions; track question.id; let i = $index) {
+          <div class="question-row-card">
+            <div class="question-number">#{{ i + 1 }}</div>
+            <div class="question-content">
+              <p class="question-text">{{ question.text }}</p>
+            </div>
+            <div class="row-actions">
+              <a [routerLink]="['/questions', question.id, 'edit']" class="action-link edit-link">
+                <span class="icon">📝</span> Edit
+              </a>
+              <button (click)="deleteQuestion(question.id)" class="action-link delete-link">
+                <span class="icon">❌</span> Delete
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<style>
+/* quiz-management.component.css */
+.management-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Overview Card */
+.overview-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f0f0;
+  margin-bottom: 40px;
+}
+
+.overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+}
+
+.title-section {
+  flex: 1;
+}
+
+.quiz-main-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.quiz-main-description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #666;
+}
+
+.overview-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Questions Section */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 10px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.question-count {
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.question-row-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid #eee;
+  transition: all 0.2s ease;
+}
+
+.question-row-card:hover {
+  border-color: #4f46e5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transform: translateX(4px);
+}
+
+.question-number {
+  font-weight: 800;
+  color: #4f46e5;
+  font-size: 1.1rem;
+  min-width: 40px;
+}
+
+.question-content {
+  flex: 1;
+}
+
+.question-text {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.row-actions {
+  display: flex;
+  gap: 16px;
+}
+
+/* Buttons & Links */
+.btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-edit-quiz {
+  background: #f5f3ff;
+  color: #4f46e5;
+}
+
+.btn-edit-quiz:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+.btn-delete-quiz {
+  background: #fff5f5;
+  color: #dc2626;
+}
+
+.btn-delete-quiz:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.action-link {
+  background: transparent;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.edit-link {
+  color: #4f46e5;
+}
+
+.edit-link:hover {
+  background: #f5f3ff;
+}
+
+.delete-link {
+  color: #dc2626;
+}
+
+.delete-link:hover {
+  background: #fff5f5;
+}
+
+@media (max-width: 768px) {
+  .overview-header {
+    flex-direction: column;
+  }
+  
+  .question-row-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .row-actions {
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 12px;
+  }
+}
+</style>

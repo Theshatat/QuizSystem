@@ -23,15 +23,20 @@ namespace QuizSystem.Data
 
             builder.Entity<AttemptedAnswer>()
                 .HasOne(a => a.Question)
-                .WithMany()
+                .WithMany(q => q.AttemptedAnswers)
                 .HasForeignKey(a => a.QuestionId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<AttemptedAnswer>()
-        .HasOne(a => a.SelectedAnswer)
-        .WithMany()
-        .HasForeignKey(a => a.SelectedAnswerId)
-        .OnDelete(DeleteBehavior.NoAction);
+                .HasOne(a => a.SelectedAnswer)
+                .WithMany(a => a.AttemptedAnswers)
+                .HasForeignKey(a => a.SelectedAnswerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<AttemptedAnswer>()
+                .HasOne(a => a.QuizAttempt)
+                .WithMany(q => q.AttemptedAnswers)
+                .HasForeignKey(a => a.QuizAttemptId);
         }
     }
 }

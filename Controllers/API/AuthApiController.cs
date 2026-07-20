@@ -61,7 +61,7 @@ namespace QuizSystem.Controllers.API
                 IdentityResult result = await userManager.CreateAsync(user, userDto.Password);
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(user, "Instructor");
+                    await userManager.AddToRoleAsync(user, "Student");
                     return Ok("Instructor created successfully");
                 }
                 else

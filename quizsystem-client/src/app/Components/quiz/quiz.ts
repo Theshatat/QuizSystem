@@ -2,7 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { QuizzService } from '../../Services/QuizzService/quizz-service';
 import { IQuiz } from '../../Models/Quiz/quiz';
 import { Router } from '@angular/router';
-
+import { HttpClientService } from '../../Services/HttpService/http-client-service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmModal } from '../confirm-modal/confirm-modal';
 @Component({
   selector: 'app-quiz',
   imports: [],
@@ -16,10 +18,11 @@ export class Quiz implements OnInit{
   selectedQuiz = signal<IQuiz | null>(null);
   // loading: boolean = true;
   loading = signal<boolean>(true);
+  isInstructor : boolean =false;
   error = signal<string | null>(null);
-  
-  constructor(private quizzService: QuizzService, private _routerService: Router) {}
-ngOnInit(): void {
+  constructor(private quizzService: QuizzService,private modalService: NgbModal, private _routerService: Router, private authService: HttpClientService) {}
+  ngOnInit(): void {
+    this.isInstructor = this.authService.isInstructorOrAdmin();
     this.quizzService.getAllQuizzes().subscribe({
       next: (quizzes) => {
         this.myQuizzes.set(quizzes);
@@ -52,16 +55,7 @@ ngOnInit(): void {
       }
     );
   }
-  deleteQuiz(quizId: number) {
-    this.quizzService.deleteQuiz(quizId).subscribe(
-      () => {
-        console.log(`Quiz with ID ${quizId} deleted successfully.`);
-      },
-      (error) => {
-        console.error(`Error deleting quiz with ID ${quizId}:`, error);
-      }
-    );
-  }
+  
   createQuiz(quizData: any) {
     this.quizzService.createQuiz(quizData).subscribe(
       (newQuiz) => {
@@ -72,9 +66,32 @@ ngOnInit(): void {
       }
     );
   }
+  
   navigateByUrl(quizId: number) {
     // window.location.href = `/quizzes/${quizId}`;
     this._routerService.navigate(['/quizzes',quizId]);
-
+    
   }
+  navigate() {
+    this._routerService.navigate(['/create-quiz']);
+  }
+  deleteQuiz(quizId: number): void {
+  const modalRef = this.modalService.open(ConfirmModal);
+  modalRef.componentInstance.title = 'Delete Quiz';
+  modalRef.componentInstance.message = 'This will permanently delete this quiz and all its questions. Continue?';
+
+  modalRef.result.then(
+    (confirmed) => {
+      if (confirmed) {
+        this.quizzService.deleteQuiz(quizId).subscribe({
+          next: () => {
+            this.myQuizzes.update(current => current.filter(q => q.id !== quizId));
+          },
+          error: (err) => console.error('Error deleting quiz:', err)
+        });
+      }
+    },
+    () => { /* dismissed, do nothing */ }
+  );
+}
 }

@@ -1,0 +1,160 @@
+<!-- confirm-modal.component.html -->
+<div class="custom-modal-wrapper">
+  <div class="modal-content-card">
+    <div class="modal-header">
+      <div class="warning-icon-wrapper">
+        <span class="warning-icon">⚠️</span>
+      </div>
+      <h4 class="modal-title">{{ title }}</h4>
+      <button type="button" class="btn-close-x" (click)="cancel()" aria-label="Close">
+        &times;
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-message">{{ message }}</p>
+      <p class="modal-sub-message">This action cannot be undone. Please confirm if you wish to proceed.</p>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-danger" (click)="confirm()">
+        Confirm Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* confirm-modal.component.css */
+.custom-modal-wrapper {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  padding: 20px;
+}
+
+.modal-content-card {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.modal-header {
+  padding: 32px 32px 16px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.warning-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: #fff5f5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.warning-icon {
+  font-size: 2rem;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.btn-close-x {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.btn-close-x:hover {
+  color: #1a1a1a;
+}
+
+.modal-body {
+  padding: 0 32px 32px;
+  text-align: center;
+}
+
+.modal-message {
+  font-size: 1.1rem;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.modal-sub-message {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 24px 32px 32px;
+  display: flex;
+  gap: 12px;
+  background: #f9fafb;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(220, 38, 38, 0.3);
+}
+
+@media (max-width: 480px) {
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+}
+</style>

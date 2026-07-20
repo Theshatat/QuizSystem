@@ -1,0 +1,311 @@
+<!-- restyled-questions.component.html -->
+<div class="questions-builder-wrapper">
+  <form [formGroup]="questionsForm" (ngSubmit)="onSubmit()" class="modern-form">
+    <div formArrayName="questions" class="questions-stack">
+      @for (question of questions.controls; track $index; let qi = $index) {
+        <div [formGroupName]="qi" class="question-card">
+          <div class="card-header">
+            <h3 class="question-title">Question {{ qi + 1 }}</h3>
+            <button type="button" class="btn-remove" (click)="removeQuestion(qi)" title="Remove this question">
+              <span class="remove-icon">🗑️</span>
+            </button>
+          </div>
+
+          <div class="card-body">
+            <!-- Question Text -->
+            <div class="form-group">
+              <label class="input-label">Question Text</label>
+              <input 
+                type="text" 
+                formControlName="text" 
+                placeholder="What is the question?" 
+                class="input-control"
+                [class.error-border]="question.get('text')?.invalid && question.get('text')?.touched"
+              />
+              @if (question.get('text')?.invalid && question.get('text')?.touched) {
+                <div class="error-text">Question text is required (min 15 chars).</div>
+              }
+            </div>
+
+            <!-- Image URL -->
+            <div class="form-group">
+              <label class="input-label">Image URL (optional)</label>
+              <div class="input-with-icon">
+                <span class="icon">🖼️</span>
+                <input 
+                  type="text" 
+                  formControlName="imageUrl" 
+                  placeholder="https://example.com/image.jpg" 
+                  class="input-control"
+                />
+              </div>
+            </div>
+
+            <!-- Answers Section -->
+            <div class="answers-container">
+              <label class="input-label">Answers & Correct Option</label>
+              <div formArrayName="answers" class="answers-list">
+                @for (answer of getAnswers(qi).controls; track $index; let ai = $index) {
+                  <div [formGroupName]="ai" class="answer-item" [class.selected-answer]="answer.get('isCorrect')?.value">
+                    <div class="radio-wrapper">
+                      <input
+                        type="radio"
+                        [name]="'correct-answer-' + qi"
+                        [checked]="answer.get('isCorrect')?.value"
+                        (change)="selectCorrectAnswer(qi, ai)"
+                        class="custom-radio"
+                      />
+                    </div>
+                    <input 
+                      type="text" 
+                      formControlName="text" 
+                      [placeholder]="'Answer ' + (ai + 1)" 
+                      class="answer-input"
+                    />
+                    @if (answer.get('isCorrect')?.value) {
+                      <span class="correct-badge">Correct</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="form-footer">
+      <button type="button" class="btn-add" (click)="addQusetion()">
+        <span class="plus">+</span> Add Another Question
+      </button>
+      
+      <button type="submit" class="btn-save">
+        Save All Questions
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+/* restyled-questions.component.css */
+.questions-builder-wrapper {
+  max-width: 800px;
+  margin: 30px auto;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.questions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.question-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.question-card:hover {
+  border-color: #4f46e5;
+}
+
+.card-header {
+  padding: 20px 24px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.question-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.btn-remove {
+  background: #fee2e2;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-remove:hover {
+  background: #fecaca;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.input-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.input-control:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon .icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.input-with-icon .input-control {
+  padding-left: 40px;
+}
+
+.error-border {
+  border-color: #ef4444 !important;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Answers List */
+.answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.answer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.answer-item.selected-answer {
+  background: #f5f3ff;
+  border-color: #4f46e5;
+}
+
+.custom-radio {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+
+.answer-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.answer-input:focus {
+  outline: none;
+}
+
+.correct-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4f46e5;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* Footer Actions */
+.form-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-add {
+  background: white;
+  color: #4f46e5;
+  border: 2px dashed #4f46e5;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-add:hover {
+  background: #f5f3ff;
+  border-style: solid;
+}
+
+.btn-save {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+}
+
+.btn-save:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+</style>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ILoginRequest, ILoginResponse } from '../../Models/iuser';
+import { jwtDecode } from 'jwt-decode';
 @Injectable({
   providedIn: 'root',
 })
@@ -33,4 +34,20 @@ export class HttpClientService {
   getToken(): string | null {
     return localStorage.getItem('token');
   }
+  getRole(): string | null {
+  const token = this.getToken();
+  if (!token) return null;
+
+  try {
+    const decoded: any = jwtDecode(token);
+    return decoded['role'] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+isInstructorOrAdmin(): boolean {
+  const role = this.getRole();
+  return role === 'Instructor' || role === 'Admin';
+}
 }
